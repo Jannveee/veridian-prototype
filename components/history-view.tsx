@@ -1,31 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, Filter, Download } from 'lucide-react';
+import { getAuditHistory } from '../veridianCore';
 
 interface Audit {
   id: string;
   filename: string;
   date: string;
   score: number;
-  leaks: number;
-  savings: number;
+  carbonLeaks: number;
+  co2Saved: string;
 }
-
-const auditHistory: Audit[] = [
-  { id: '1', filename: 'api-handler.js', date: '2024-04-25', score: 78, leaks: 3, savings: 2.4 },
-  { id: '2', filename: 'utils.py', date: '2024-04-24', score: 65, leaks: 5, savings: 1.8 },
-  { id: '3', filename: 'database.ts', date: '2024-04-22', score: 82, leaks: 2, savings: 3.2 },
-  { id: '4', filename: 'middleware.js', date: '2024-04-19', score: 71, leaks: 4, savings: 1.5 },
-  { id: '5', filename: 'services.py', date: '2024-04-18', score: 88, leaks: 1, savings: 2.8 },
-  { id: '6', filename: 'components.tsx', date: '2024-04-15', score: 76, leaks: 3, savings: 2.1 },
-  { id: '7', filename: 'hooks.ts', date: '2024-04-12', score: 81, leaks: 2, savings: 2.7 },
-  { id: '8', filename: 'worker.js', date: '2024-04-10', score: 59, leaks: 7, savings: 1.2 },
-];
 
 export function HistoryView() {
   const [filterScore, setFilterScore] = useState<[number, number]>([0, 100]);
   const [filterDate, setFilterDate] = useState<string>('all');
+  const [auditHistory, setAuditHistory] = useState<Audit[]>([]);
+
+  useEffect(() => {
+    setAuditHistory(getAuditHistory());
+  }, []);
 
   const filteredAudits = auditHistory.filter((audit) => {
     const scoreMatch = audit.score >= filterScore[0] && audit.score <= filterScore[1];
@@ -137,12 +132,12 @@ export function HistoryView() {
                   className="border-b border-primary/10 hover:bg-background/50 transition-colors"
                 >
                   <td className="py-4 px-4 font-medium text-foreground">{audit.filename}</td>
-                  <td className="py-4 px-4 text-foreground/70">{audit.date}</td>
+                  <td className="py-4 px-4 text-foreground/70">{new Date(audit.date).toLocaleDateString()}</td>
                   <td className={`py-4 px-4 text-center font-semibold ${getScoreColor(audit.score)}`}>
                     {audit.score}
                   </td>
-                  <td className="py-4 px-4 text-center text-foreground/80">{audit.leaks}</td>
-                  <td className="py-4 px-4 text-center font-semibold text-primary">{audit.savings} kg</td>
+                  <td className="py-4 px-4 text-center text-foreground/80">{audit.carbonLeaks}</td>
+                  <td className="py-4 px-4 text-center font-semibold text-primary">{audit.co2Saved} kg</td>
                   <td className="py-4 px-4 text-center">
                     <button className="inline-flex items-center gap-2 p-2 hover:bg-primary/10 rounded-lg transition-colors text-primary">
                       <Eye className="w-4 h-4" />

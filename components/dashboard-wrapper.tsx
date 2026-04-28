@@ -7,7 +7,7 @@ import { AuditWorkspace } from './audit-workspace';
 import { HistoryView } from './history-view';
 import { SettingsView } from './settings-view';
 import { RightPanel } from './right-panel';
-import { runGreenAudit, calculateSustainability, getCarbonStats } from '../veridianCore';
+import { runGreenAudit, calculateSustainability, getCarbonStats, suggestGreenRefactor, saveAuditToHistory } from '../veridianCore';
 
 export function DashboardWrapper() {
   const [activeView, setActiveView] = useState<'dashboard' | 'audit' | 'history' | 'settings'>('dashboard');
@@ -17,27 +17,38 @@ export function DashboardWrapper() {
     stats: any;
     isAuditing: boolean;
     audited: boolean;
+    refactoredCode?: string;
   } | null>(null);
 
   const handleStartAudit = () => {
     setActiveView('audit');
   };
 
-  const handleAuditComplete = useCallback((code: string) => {
-    setAuditResults(prev => ({ ...prev, isAuditing: true } as any));
+  const handleAuditComplete = useCallback((code: string, filename: string = 'audit.js') => {
+    setAuditResults({
+      score: 0,
+      issues: [],
+      stats: null,
+      isAuditing: true,
+      audited: false,
+    });
     
     // Simulate processing time for the UI effect
     setTimeout(() => {
       const issues = runGreenAudit(code);
       const score = calculateSustainability(issues);
       const stats = getCarbonStats(score);
+      const refactoredCode = suggestGreenRefactor(code);
       
+      saveAuditToHistory(filename, code);
+
       setAuditResults({
         score,
         issues,
         stats,
         isAuditing: false,
-        audited: true
+        audited: true,
+        refactoredCode
       });
     }, 2800);
   }, []);
