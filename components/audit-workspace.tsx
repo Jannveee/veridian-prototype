@@ -8,6 +8,18 @@ interface AuditWorkspaceProps {
   externalResults: {
     isAuditing: boolean;
     audited: boolean;
+    score?: number;
+    issues?: any[];
+    stats?: any;
+    refactoredCode?: string;
+  } | null;
+  initialData?: {
+    code: string;
+    filename?: string;
+    score: number;
+    issues: any[];
+    stats: any;
+    refactoredCode: string;
   } | null;
 }
 
@@ -42,21 +54,29 @@ def bubble_sort(arr):
             if arr[j] > arr[j+1]:
                 arr[j], arr[j+1] = arr[j+1], arr[j]`;
 
-export function AuditWorkspace({ onAuditComplete, externalResults }: AuditWorkspaceProps) {
+export function AuditWorkspace({ onAuditComplete, externalResults, initialData }: AuditWorkspaceProps) {
   const [code, setCode] = useState(jsDefault);
   const [language, setLanguage] = useState<'js' | 'py'>('js');
   const [lastAuditedCode, setLastAuditedCode] = useState<string | null>(null);
 
   useEffect(() => {
-    setCode(language === 'py' ? pyDefault : jsDefault);
-    setLastAuditedCode(null);
-  }, [language]);
+    if (initialData?.code) {
+      setCode(initialData.code);
+      setLastAuditedCode(initialData.code);
+      const lang = initialData.filename?.endsWith('.py') ? 'py' : 'js';
+      setLanguage(lang);
+    } else {
+      setCode(language === 'py' ? pyDefault : jsDefault);
+      setLastAuditedCode(null);
+    }
+  }, [initialData]);
 
   const isAuditing = externalResults?.isAuditing || false;
   const audited = externalResults?.audited || false;
-  
+
+  const hasInitialData = initialData?.code && initialData?.score !== undefined;
   const isCodeUnchanged = lastAuditedCode !== null && code === lastAuditedCode;
-  const showAuditedState = audited && isCodeUnchanged;
+  const showAuditedState = audited && isCodeUnchanged || hasInitialData;
 
   const runAudit = () => {
     if (isAuditing || showAuditedState) return;
@@ -122,7 +142,7 @@ export function AuditWorkspace({ onAuditComplete, externalResults }: AuditWorksp
         <button
           id="auditBtn"
           onClick={runAudit}
-          disabled={isAuditing || showAuditedState}
+          disabled={!!isAuditing || !!showAuditedState}
           className={`w-full py-3 px-6 rounded-lg border font-semibold transition-all neon-glow-hover relative overflow-hidden group ${
             showAuditedState 
               ? 'border-primary bg-primary/10 text-primary cursor-default' 

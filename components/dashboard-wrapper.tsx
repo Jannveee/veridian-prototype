@@ -10,17 +10,26 @@ import { RightPanel } from './right-panel';
 import { runGreenAudit, calculateSustainability, getCarbonStats, generateGreenRefactor, saveAuditToHistory } from '../veridianCore';
 
 export function DashboardWrapper() {
-  const [activeView, setActiveView] = useState<'dashboard' | 'audit' | 'history' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<"dashboard" | "audit" | "history" | "settings">("dashboard");
   const [auditResults, setAuditResults] = useState<{
     score: number;
-    issues: any[];
+    issues: any[];  
     stats: any;
     isAuditing: boolean;
     audited: boolean;
     refactoredCode?: string;
   } | null>(null);
+  const [initialAuditData, setInitialAuditData] = useState<{
+    code: string;
+    filename?: string;
+    score: number;
+    issues: any[];
+    stats: any;
+    refactoredCode: string;
+  } | null>(null);
 
   const handleStartAudit = () => {
+    setInitialAuditData(null);
     setActiveView('audit');
   };
 
@@ -58,9 +67,31 @@ export function DashboardWrapper() {
       case 'dashboard':
         return <DashboardView onStartAudit={handleStartAudit} />;
       case 'audit':
-        return <AuditWorkspace onAuditComplete={handleAuditComplete} externalResults={auditResults} />;
+        return <AuditWorkspace onAuditComplete={handleAuditComplete} externalResults={auditResults} initialData={initialAuditData} />;
       case 'history':
-        return <HistoryView />;
+        return <HistoryView onViewAudit={(audit) => {
+          if (audit.code) {
+            const issues = runGreenAudit(audit.code);
+            const stats = getCarbonStats(audit.score);
+            setInitialAuditData({
+              code: audit.code,
+              filename: audit.filename,
+              score: audit.score,
+              issues,
+              stats,
+              refactoredCode: generateGreenRefactor(audit.code),
+            });
+            setAuditResults({
+              score: audit.score,
+              issues,
+              stats,
+              isAuditing: false,
+              audited: true,
+              refactoredCode: generateGreenRefactor(audit.code),
+            });
+            setActiveView('audit');
+          }
+        }} />;
       case 'settings':
         return <SettingsView />;
       default:
@@ -71,7 +102,7 @@ export function DashboardWrapper() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar - Fixed */}
-      <Sidebar activeTab={activeView} onTabChange={setActiveView} />
+      <Sidebar activeTab={activeView} onTabChange={(tab: any) => setActiveView(tab)} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden ml-20">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Eye, Filter, Download } from 'lucide-react';
-import { getAuditHistory } from '../veridianCore';
+import { getAuditHistory, exportAuditHistoryToCSV } from '../veridianCore';
 
 interface Audit {
   id: string;
@@ -11,9 +11,14 @@ interface Audit {
   score: number;
   carbonLeaks: number;
   co2Saved: string;
+  code?: string;
 }
 
-export function HistoryView() {
+interface HistoryViewProps {
+  onViewAudit?: (audit: Audit) => void;
+}
+
+export function HistoryView({ onViewAudit }: HistoryViewProps) {
   const [filterScore, setFilterScore] = useState<[number, number]>([0, 100]);
   const [filterDate, setFilterDate] = useState<string>('all');
   const [auditHistory, setAuditHistory] = useState<Audit[]>([]);
@@ -139,7 +144,10 @@ export function HistoryView() {
                   <td className="py-4 px-4 text-center text-foreground/80">{audit.carbonLeaks}</td>
                   <td className="py-4 px-4 text-center font-semibold text-primary">{audit.co2Saved} kg</td>
                   <td className="py-4 px-4 text-center">
-                    <button className="inline-flex items-center gap-2 p-2 hover:bg-primary/10 rounded-lg transition-colors text-primary">
+                    <button
+                      onClick={() => onViewAudit?.(audit)}
+                      className="inline-flex items-center gap-2 p-2 hover:bg-primary/10 rounded-lg transition-colors text-primary"
+                    >
                       <Eye className="w-4 h-4" />
                       <span className="text-xs">View</span>
                     </button>
@@ -158,7 +166,10 @@ export function HistoryView() {
       </div>
 
       {/* Export Button */}
-      <button className="flex items-center gap-2 px-6 py-3 bg-background border border-primary/30 rounded-lg hover:border-primary/60 text-foreground font-medium transition-all">
+      <button
+        onClick={() => exportAuditHistoryToCSV()}
+        className="flex items-center gap-2 px-6 py-3 bg-background border border-primary/30 rounded-lg hover:border-primary/60 text-foreground font-medium transition-all"
+      >
         <Download className="w-4 h-4" />
         Export History as CSV
       </button>

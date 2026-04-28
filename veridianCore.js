@@ -176,7 +176,8 @@ export function saveAuditToHistory(filename, code) {
     date: new Date().toISOString(),
     score: score,
     carbonLeaks: issues.length,
-    co2Saved: stats.co2SavedKg // matches $CO_2$ Saved
+    co2Saved: stats.co2SavedKg, // matches $CO_2$ Saved
+    code: code // Store the actual code for later viewing
   };
 
   const currentHistory = getAuditHistory();
@@ -205,6 +206,43 @@ export function getAuditHistory() {
     console.error("Failed to retrieve audit history:", error);
     return [];
   }
+}
+
+export function getAuditById(id) {
+  const history = getAuditHistory();
+  return history.find(audit => audit.id === id) || null;
+}
+
+export function exportAuditHistoryToCSV() {
+  const history = getAuditHistory();
+  if (history.length === 0) return null;
+
+  const headers = ['ID', 'Filename', 'Date', 'Score', 'Carbon Leaks', 'CO₂ Saved (kg)'];
+  const rows = history.map(audit => [
+    audit.id,
+    audit.filename,
+    new Date(audit.date).toLocaleDateString(),
+    audit.score,
+    audit.carbonLeaks,
+    audit.co2Saved
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `green_audit_history_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  return csvContent;
 }
 
 
