@@ -1,0 +1,299 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Cyber-Eco Color Palette */
+  --background: #0f0f0f;
+  --foreground: #e8e8e8;
+  --card: #1a1a1a;
+  --card-foreground: #e8e8e8;
+  --popover: #1a1a1a;
+  --popover-foreground: #e8e8e8;
+  --primary: #39FF14;
+  --primary-foreground: #0f0f0f;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #39FF14;
+  --muted: #2a2a2a;
+  --muted-foreground: #888888;
+  --accent: #39FF14;
+  --accent-foreground: #0f0f0f;
+  --destructive: #ff3333;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a2a;
+  --input: #1a1a1a;
+  --ring: #39FF14;
+  --chart-1: #39FF14;
+  --chart-2: #1abc9c;
+  --chart-3: #3498db;
+  --chart-4: #2ecc71;
+  --chart-5: #27ae60;
+  --radius: 0.5rem;
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #e8e8e8;
+  --sidebar-primary: #39FF14;
+  --sidebar-primary-foreground: #0f0f0f;
+  --sidebar-accent: #39FF14;
+  --sidebar-accent-foreground: #0f0f0f;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: #39FF14;
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Glassmorphism and Neon Glow Effects */
+.glass {
+  background: rgba(26, 26, 26, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(57, 255, 20, 0.2);
+}
+
+.glass-dark {
+  background: rgba(15, 15, 15, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(57, 255, 20, 0.15);
+}
+
+.neon-glow {
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.5), inset 0 0 20px rgba(57, 255, 20, 0.1);
+}
+
+.neon-glow-hover:hover {
+  box-shadow: 0 0 30px rgba(57, 255, 20, 0.8), inset 0 0 30px rgba(57, 255, 20, 0.2);
+}
+
+.neon-border {
+  border-color: #39FF14;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.4), inset 0 0 10px rgba(57, 255, 20, 0.05);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CINEMATIC INTRO ANIMATION STYLES
+   ══════════════════════════════════════════════════════════════ */
+
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2000;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px;
+}
+
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-eyebrow {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: #39FF14;
+  text-transform: uppercase;
+  opacity: 0;
+  margin-bottom: 28px;
+  animation: fadeUp 0.8s ease 0.4s forwards;
+}
+
+.intro-quote {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(26px, 5vw, 56px);
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.15;
+  max-width: 820px;
+  padding: 0 24px;
+}
+
+.word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: wordUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.word.accent {
+  color: #39FF14;
+}
+
+.intro-sub {
+  font-size: 14px;
+  color: #333;
+  margin-top: 36px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 2.6s forwards;
+}
+
+.intro-line {
+  width: 1px;
+  height: 0;
+  background: linear-gradient(to bottom, #39FF14, transparent);
+  margin-top: 48px;
+  animation: lineGrow 1s ease 3.4s forwards;
+}
+
+#curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: #0f0f0f;
+  transform: translateY(100%);
+}
+
+#curtain.rising {
+  animation: curtainRise 1.2s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  background: #0f0f0f;
+  display: flex;
+  opacity: 0;
+  overflow: hidden;
+}
+
+#app.visible {
+  animation: appFadeIn 0.6s ease 0.5s forwards;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wordUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lineGrow {
+  to {
+    height: 60px;
+  }
+}
+
+@keyframes curtainRise {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes appFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Word Fade Up Animation - Core intro animation */
+@keyframes wordFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.word {
+  opacity: 0;
+  animation: wordFadeUp 0.8s forwards;
+  margin-right: 0.5rem;
+}
+
+.word.accent {
+  color: #39FF14;
+  font-weight: bold;
+}
+
+/* App visibility transition */
+#app {
+  opacity: 0;
+  transition: opacity 0.8s ease-in;
+}
+
+#app.visible {
+  opacity: 1;
+}
