@@ -1,6 +1,6 @@
 'use client';
 
-import { Zap, AlertCircle, AlertTriangle, ArrowUp } from 'lucide-react';
+import { Zap, AlertCircle, AlertTriangle, ArrowUp, Copy, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface RightPanelProps {
@@ -10,11 +10,21 @@ interface RightPanelProps {
     stats: any;
     isAuditing: boolean;
     audited: boolean;
+    refactoredCode?: string;
   } | null;
 }
 
 export function RightPanel({ results }: RightPanelProps) {
   const [displayScore, setDisplayScore] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const copyRefactoredCode = () => {
+    if (results?.refactoredCode) {
+      navigator.clipboard.writeText(results.refactoredCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (results?.audited) {
@@ -195,29 +205,43 @@ export function RightPanel({ results }: RightPanelProps) {
         <div className="rounded-lg border border-primary/10 overflow-hidden glass">
           <div className="flex items-center justify-between p-2.5 bg-primary/5 border-b border-primary/10">
             <span className="text-xs font-semibold text-primary font-mono">optimized.js</span>
-            <span
-              id="refactorBadge"
-              className={`text-7xs font-semibold px-2 py-0.5 rounded bg-background border border-primary/20 ${results?.audited ? 'text-primary' : 'text-foreground/60'}`}
-              style={results?.audited ? { background: 'var(--neon-dim)', color: 'var(--neon)' } : {}}
-            >
-              {results?.audited ? 'READY' : 'PENDING'}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                id="refactorBadge"
+                className={`text-7xs font-semibold px-2 py-0.5 rounded bg-background border border-primary/20 ${results?.audited ? 'text-primary' : 'text-foreground/60'}`}
+                style={results?.audited ? { background: 'var(--neon-dim)', color: 'var(--neon)' } : {}}
+              >
+                {results?.audited ? 'READY' : 'PENDING'}
+              </span>
+            </div>
           </div>
           <div
             id="refactorCode"
-            className="p-3 text-xs font-mono max-h-48 overflow-y-auto text-foreground/80"
+            className="p-3 text-xs font-mono max-h-48 overflow-y-auto text-foreground/80 relative group/code"
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: '#2a2a3a transparent',
             }}
           >
             {results?.audited ? (
-              <pre className="whitespace-pre-wrap break-all text-[10px]">
-                {/* We'll implement a real refactor suggestion in veridianCore or here */}
-                {results.issues.length > 0 
-                  ? "Refactor recommended to address detected leaks." 
-                  : "Code is already optimized."}
-              </pre>
+              <>
+                <pre className="whitespace-pre-wrap break-all text-[10px] pb-8">
+                  {results.refactoredCode || "Code is already optimized."}
+                </pre>
+                {results.refactoredCode && (
+                  <button
+                    onClick={copyRefactoredCode}
+                    className="absolute bottom-2 right-2 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] px-2 py-1 rounded border border-primary/20 transition-all flex items-center gap-1.5"
+                  >
+                    {copied ? (
+                      <CheckCircle className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                    {copied ? 'Copied!' : 'Copy Optimized Code'}
+                  </button>
+                )}
+              </>
             ) : (
               <div className="text-foreground/50">Run an audit to generate green refactor suggestions...</div>
             )}

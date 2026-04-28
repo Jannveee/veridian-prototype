@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { IntroAnimation } from '@/components/intro-animation';
+import  { IntroAnimation } from '@/components/intro-animation';
 import { DashboardWrapper } from '@/components/dashboard-wrapper';
 
 export default function Home() {

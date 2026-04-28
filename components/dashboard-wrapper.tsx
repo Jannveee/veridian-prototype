@@ -7,7 +7,7 @@ import { AuditWorkspace } from './audit-workspace';
 import { HistoryView } from './history-view';
 import { SettingsView } from './settings-view';
 import { RightPanel } from './right-panel';
-import { runGreenAudit, calculateSustainability, getCarbonStats, suggestGreenRefactor, saveAuditToHistory } from '../veridianCore';
+import { runGreenAudit, calculateSustainability, getCarbonStats, generateGreenRefactor, saveAuditToHistory } from '../veridianCore';
 
 export function DashboardWrapper() {
   const [activeView, setActiveView] = useState<'dashboard' | 'audit' | 'history' | 'settings'>('dashboard');
@@ -38,7 +38,7 @@ export function DashboardWrapper() {
       const issues = runGreenAudit(code);
       const score = calculateSustainability(issues);
       const stats = getCarbonStats(score);
-      const refactoredCode = suggestGreenRefactor(code);
+      const refactoredCode = generateGreenRefactor(code);
       
       saveAuditToHistory(filename, code);
 

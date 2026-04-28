@@ -209,82 +209,54 @@ export function getAuditHistory() {
 
 
 /**
- * 5. The Refactor Generator
- * Returns a mock "Optimized" version of the inefficient code.
- * Connect this to a "Fix Issues" or "Auto-Refactor" UI button.
+ * 5. The Green Refactor Generator
+ * Provides 'Clean' alternatives for common leaks:
+ * - Infinite loops -> Controlled loop with safety break
+ * - API calls in loop -> Batch processing suggestion
+ * - O(n^2) sorting -> Native .sort() optimization
  * 
- * @param {string} code - Inefficient code.
- * @returns {string} Suggeseted optimized code.
+ * @param {string} code - The source code to refactor.
+ * @returns {string} Optimized version of the code.
  */
-export function suggestGreenRefactor(code) {
+export function generateGreenRefactor(code) {
   let optimizedCode = code;
   let modificationsMade = false;
 
-  // Fix infinite loops
-  if (/while\s*$\s*true\s*$/i.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(
-      /while\s*$\s*true\s*$/gi, 
-      "let isRunning = true; // Use termination condition\nwhile(isRunning)"
-    );
-    modificationsMade = true;
-  }
-  if (/while\s*$\s*1\s*$/i.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(
-      /while\s*$\s*1\s*$/gi,
-      "let isRunning = true; // Use termination condition\nwhile(isRunning)"
-    );
-    modificationsMade = true;
-  }
-  if (/for\s*$\s*;\s*;\s*$/i.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(
-      /for\s*$\s*;\s*;\s*$/gi,
-      "let isRunning = true; // Use termination condition\nwhile(isRunning)"
-    );
-    modificationsMade = true;
-  }
-  if (/while\s+True\s*:/i.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(
-      /while\s+True\s*:/gi, 
-      "is_running = True # Use termination condition\nwhile is_running:"
-    );
-    modificationsMade = true;
-  }
-  if (/while\s+(?:$\s*)?1(?:\s*$)?\s*:/i.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(
-      /while\s+(?:$\s*)?1(?:\s*$)?\s*:/gi,
-      "is_running = True # Use termination condition\nwhile is_running:"
-    );
+  // 1. Fix Infinite Loops (Controlled loop / Safety break)
+  const infiniteLoopRegex = /(while\s*\(\s*(?:true|1)\s*\)|for\s*\(\s*;\s*;\s*\)|while\s+True\s*:|while\s+1\s*:)/gi;
+  if (infiniteLoopRegex.test(optimizedCode)) {
+    optimizedCode = optimizedCode.replace(infiniteLoopRegex, (match) => {
+      if (match.includes(':')) { // Python style
+        return "MAX_ITERATIONS = 1000\niteration_count = 0\nwhile True:\n    iteration_count += 1\n    if iteration_count > MAX_ITERATIONS: break";
+      }
+      return "let iterationCount = 0;\nconst MAX_ITERATIONS = 1000;\nwhile (true) {\n  iterationCount++;\n  if (iterationCount > MAX_ITERATIONS) break;";
+    });
     modificationsMade = true;
   }
 
-  // Fix API call in loop (Mocking an extraction)
-  if (
-      /(for|while)\s*[^{:]*[{:][\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(optimizedCode) ||
-      /\.(forEach|map|filter|reduce)\s*\([\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(optimizedCode)
-    ) {
-      optimizedCode += "\n\n// VERIDIAN SUGGESTION: Batch your API calls using Promise.all() or asyncio.gather() rather than fetching inside a loop.\n/* \nconst promises = items.map(item => fetch(url, item));\nconst results = await Promise.all(promises);\n*/";
-      modificationsMade = true;
+  // 2. Fix API calls inside loops (Batch Processing)
+  const apiCallInLoopRegex = /((?:for|while|forEach|map|filter|reduce)[\s\S]*?)(fetch|axios|XMLHttpRequest|requests\.|httpx\.)/gi;
+  if (apiCallInLoopRegex.test(optimizedCode)) {
+    optimizedCode = "// VERIDIAN OPTIMIZATION: Batch your API calls outside the loop\n" + 
+                    "// Example: const results = await Promise.all(items.map(item => fetch(url, item)));\n\n" + 
+                    optimizedCode;
+    modificationsMade = true;
   }
 
-  // Fix expensive deep clone
-  if (/JSON\.parse$\s*JSON\.stringify\(([^)]+)$\)/gi.test(optimizedCode)) {
+  // 3. Fix O(n^2) sorting (Native .sort() optimization)
+  // Simple check for nested loops that look like manual sorting
+  const manualSortRegex = /(for[\s\S]*?for[\s\S]*?if[\s\S]*?>[\s\S]*?swap)/gi;
+  if (manualSortRegex.test(optimizedCode)) {
+    optimizedCode = optimizedCode.replace(manualSortRegex, "// VERIDIAN OPTIMIZATION: Use native highly-optimized .sort() method\narray.sort((a, b) => a - b);");
+    modificationsMade = true;
+  }
+
+  // 4. Fix expensive deep clone
+  if (/JSON\.parse\(\s*JSON\.stringify\(([^)]+)\)\s*\)/gi.test(optimizedCode)) {
     optimizedCode = optimizedCode.replace(
-      /JSON\.parse$\s*JSON\.stringify\(([^)]+)$\)/gi,
-      "structuredClone($1) // Used structuredClone for better performance"
+      /JSON\.parse\(\s*JSON\.stringify\(([^)]+)\)\s*\)/gi,
+      "structuredClone($1) // Optimized with native structuredClone"
     );
-    modificationsMade = true;
-  }
-
-  // Fix unbounded global array push (mock refactor)
-  if (/(const|let|var)\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*\[\];[\s\S]*function[\s\S]*\2\.push\(/i.test(optimizedCode)) {
-    optimizedCode += "\n\n// VERIDIAN SUGGESTION: The array above grows unbounded. Consider clearing it (array.length = 0) after processing, or moving its declaration inside the function scope to prevent memory leaks.";
-    modificationsMade = true;
-  }
-
-  // Remove exact duplicate push statements
-  const pushRegex = /([ \t]*)([\w\.]+)\.push$\.\.\.([^)]+)$;\s*\n\s*\2\.push$\.\.\.\3$;/gi;
-  if (pushRegex.test(optimizedCode)) {
-    optimizedCode = optimizedCode.replace(pushRegex, "$1$2.push(...$3); // Removed duplicate push statement");
     modificationsMade = true;
   }
 
@@ -292,5 +264,5 @@ export function suggestGreenRefactor(code) {
     return "// VERIDIAN: No obvious structural anti-patterns found to auto-refactor.\n\n" + code;
   }
 
-  return "/** \n * GREEN REFACTOR APPLIED\n * Reduced CPU cycles and network overhead.\n */\n\n" + optimizedCode;
+  return "/** \n * GREEN REFACTOR APPLIED\n * Optimized for reduced CPU cycles and memory footprint.\n */\n\n" + optimizedCode;
 }

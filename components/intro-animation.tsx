@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 
-export default function IntroAnimation({ onComplete }: { onComplete: () => void }) {
+export function IntroAnimation({ onComplete }: { onComplete: () => void }) {
   const [isRising, setIsRising] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   
