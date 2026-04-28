@@ -15,15 +15,43 @@
 export function runGreenAudit(code) {
   const issues = [];
 
-  // Simple string and regex matching to simulate AST-based AI analysis
+  // 1. Strip comments to avoid false positives (JS and Python style)
+  const cleanCode = code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|#[^\n]*/g, "");
   
-  // Detect infinite loops
-  if (
-    /while\s*$\s*(true|1)\s*$/i.test(code) ||
-    /for\s*$\s*;\s*;\s*$/i.test(code) ||
-    /do\s*\{[\s\S]*\}\s*while\s*$\s*(true|1)\s*$\s*;?/i.test(code) ||
-    /while\s*(?:$\s*)?(true|1)(?:\s*$)?\s*:/i.test(code)
-  ) {
+  // 2. Detect infinite loops
+  let hasInfiniteLoop = false;
+
+  // Check for while(true) / while(1) with braces (JS style)
+  const jsWhileRegex = /while\s*\(\s*(true|1)\s*\)\s*\{([\s\S]*?)\}/gi;
+  let match;
+  while ((match = jsWhileRegex.exec(cleanCode)) !== null) {
+    // If the loop body doesn't contain 'break', it's a leak
+    if (!/\bbreak\b/.test(match[1])) {
+      hasInfiniteLoop = true;
+      break;
+    }
+  }
+
+  // Check for while True / while 1 (Python style)
+  if (!hasInfiniteLoop) {
+    const pyWhileRegex = /while\s+(true|1)\s*:\s*([\s\S]*?)(?=\n\S|$)/gi;
+    while ((match = pyWhileRegex.exec(cleanCode)) !== null) {
+      if (!/\bbreak\b/.test(match[1])) {
+        hasInfiniteLoop = true;
+        break;
+      }
+    }
+  }
+
+  // Check for other unconditional loops that are harder to break from via simple regex
+  if (!hasInfiniteLoop && (
+    /for\s*\(\s*;\s*;\s*\)/i.test(cleanCode) ||
+    /do\s*\{[\s\S]*\}\s*while\s*\(\s*(true|1)\s*\)\s*;?/i.test(cleanCode)
+  )) {
+    hasInfiniteLoop = true;
+  }
+
+  if (hasInfiniteLoop) {
     issues.push({
       id: 'infinite_loop',
       severity: 'high',
@@ -32,12 +60,12 @@ export function runGreenAudit(code) {
     });
   }
 
-  // Detect fetch/API calls inside loops
+  // Detect fetch/API calls inside loops - Use cleanCode
   if (
-    /(for|while)\s*[^{:]*[{:][\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(code) ||
-    /\.(forEach|map|filter|reduce)\s*\([\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(code)
+    /(for|while)\s*[^{:]*[{:][\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(cleanCode) ||
+    /\.(forEach|map|filter|reduce)\s*\([\s\S]*?(fetch|axios|XMLHttpRequest|fetch_user|requests\.|httpx\.|urllib\.request|aiohttp|got|superagent|request)/i.test(cleanCode)
   ) {
-     issues.push({
+    issues.push({
       id: 'redundant_api_calls',
       severity: 'high',
       message: 'Carbon Leak Detected: API request inside a loop can cause excessive network traffic and energy waste.',
@@ -45,10 +73,10 @@ export function runGreenAudit(code) {
     });
   }
 
-  // Detect inefficient nested loops O(n^2)
+  // Detect inefficient nested loops O(n^2) - Use cleanCode
   if (
-    /(for|while)\s*$[^)]*$\s*\{[\s\S]*(for|while)\s*$[^)]*$\s*\{/i.test(code) ||
-    /(for|while)\s+[^\n]*:\s*[\s\S]*?\n\s+(for|while)\s+[^\n]*:/i.test(code)
+    /(for|while)\s*\(?[^)]*\)?\s*\{[\s\S]*(for|while)\s*\(?[^)]*\)?\s*\{/i.test(cleanCode) ||
+    /(for|while)\s+[^\n]*:\s*[\s\S]*?\n\s+(for|while)\s+[^\n]*:/i.test(cleanCode)
   ) {
     issues.push({
       id: 'inefficient_nested_loops',
@@ -58,8 +86,8 @@ export function runGreenAudit(code) {
     });
   }
 
-  // Detect deep clone in loop
-  if (/(for|while|forEach|map|filter|reduce)[\s\S]*JSON\.parse\(\s*JSON\.stringify\(/i.test(code)) {
+  // Detect deep clone in loop - Use cleanCode
+  if (/(for|while|forEach|map|filter|reduce)[\s\S]*JSON\.parse\(\s*JSON\.stringify\(/i.test(cleanCode)) {
     issues.push({
       id: 'expensive_deep_clone',
       severity: 'high',
@@ -68,8 +96,8 @@ export function runGreenAudit(code) {
     });
   }
 
-  // Detect unbounded array growth / memory leaks
-  if (/(const|let|var)\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*\[\];[\s\S]*function[\s\S]*\2\.push\(/i.test(code)) {
+  // Detect unbounded array growth / memory leaks - Use cleanCode
+  if (/(const|let|var)\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s*=\s*\[\];[\s\S]*function[\s\S]*\2\.push\(/i.test(cleanCode)) {
     issues.push({
       id: 'unbounded_global_array',
       severity: 'high',
@@ -78,11 +106,11 @@ export function runGreenAudit(code) {
     });
   }
 
-  // Detect large array allocations without need
+  // Detect large array allocations without need - Use cleanCode
   if (
-    /new\s+Array$\s*[0-9]{5,}\s*$/.test(code) ||
-    /$$\s*0\s*$$\s*\*\s*[0-9]{5,}/.test(code) ||
-    /range$\s*[0-9]{5,}\s*$/.test(code)
+    /new\s+Array\(\s*[0-9]{5,}\s*\)/.test(cleanCode) ||
+    /\[\s*0\s*\]\s*\*\s*[0-9]{5,}/.test(cleanCode) ||
+    /range\(\s*[0-9]{5,}\s*\)/.test(cleanCode)
   ) {
     issues.push({
       id: 'large_memory_allocation',
